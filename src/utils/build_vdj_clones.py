@@ -3,12 +3,11 @@ import pandas as pd
 import os
 import argparse
 
-def build_vdj_clones(result_dir:str, batch:str, library:str, barcode:str, isotype:str, output:str='vdj_clone_info.csv'):
+def build_vdj_clones(result_dir:str, library:str, barcode:str, isotype:str, output:str='vdj_clone_info.csv'):
     """Build VDJ clones according to MiXCR output clones.
 
     Args:
-        result_dir (str): Directory where the MiXCR put its results in.
-        batch (str): Batch ID
+        result_dir (str): Directory where the MiXCR put its results in. Batch dir is incorporated.
         library (str): Library ID
         barcode (str): Barcode ID
         isotype (str): Isotypes such as IgM, IgG, IgK, IgL, TRA, TRB
@@ -16,9 +15,9 @@ def build_vdj_clones(result_dir:str, batch:str, library:str, barcode:str, isotyp
     """
     
     if isotype in ['IgM','IgG']:
-        assemble_df = pd.read_csv(os.path.join(result_dir, batch, library, barcode, 'mixcr_assemble_IGH.tsv'),sep='\t')
+        assemble_df = pd.read_csv(os.path.join(result_dir, library, barcode, 'mixcr_assemble_IGH.tsv'),sep='\t')
     else:
-        assemble_df = pd.read_csv(os.path.join(result_dir, batch, library, barcode, 'mixcr_assemble_{}.tsv'.format(isotype)),sep='\t')
+        assemble_df = pd.read_csv(os.path.join(result_dir, library, barcode, 'mixcr_assemble_{}.tsv'.format(isotype)),sep='\t')
         
 
     assemble_df = assemble_df.loc[
@@ -84,7 +83,6 @@ if __name__ == "__main__":
     
     # 定义必需参数
     parser.add_argument("--result-dir", required=True, help="Base directory of MiXCR results.")
-    parser.add_argument("--batch", required=True, help="Batch ID.")
     parser.add_argument("--library", required=True, help="Library ID.")
     parser.add_argument("--barcode", required=True, help="Barcode ID.")
     parser.add_argument("--isotype", required=True, help="Isotype (e.g., IgM, IgG, TRB).")
@@ -97,7 +95,6 @@ if __name__ == "__main__":
     # 执行核心逻辑
     build_vdj_clones(
         result_dir=args.result_dir,
-        batch=args.batch,
         library=args.library,
         barcode=args.barcode,
         isotype=args.isotype,

@@ -1,0 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap');
+
+.stCode code, .stCode pre {
+    font-family: 'Cascadia Code', monospace !important;
+    font-size: 13px !important;
+}

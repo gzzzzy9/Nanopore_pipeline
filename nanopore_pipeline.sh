@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 #SBATCH -n 56
 #SBATCH -p CPU2
-#SBATCH -o slurms_out/mixcr_protocol_v5_sh_20260209.txt
+#SBATCH -o pipeline_out.txt
 
 # activate conda env
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -14,12 +14,11 @@ else
     SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 fi
 SRC_DIR="$SCRIPT_DIR/src"
-echo $SRC_DIR
 
 # set global params
 assemble_by="VDJRegion" # align param，please set to 'VDJRegion' if mutation analyses are needs，otherwise set to 'CDR3'.
-RESULT_DIR="/home/huazl/data1/GZY/Nanopore_results" # Directory where the output is stored
-DATA_DIR="/home/huazl/data1/GZY/Nanopore_data" # Directory where the raw data is stored
+# RESULT_DIR="/home/huazl/data1/GZY/Nanopore_results" # Directory where the output is stored
+# DATA_DIR="/home/huazl/data1/GZY/Nanopore_data" # Directory where the raw data is stored
 trimmingQualityThreshold=5 # align param
 error_rate=0.2 # cutadapt param
 
@@ -29,7 +28,7 @@ while getopts "b:i:o:" opt; do
     b) BATCH="$OPTARG" ;;
     i) DATA_DIR="$OPTARG" ;;
     o) RESULT_DIR="$OPTARG" ;;
-    *) echo "Usage: $0 -b batch_id -i input_dir -o output_dir" && exit 1 ;;
+    *) echo "Usage: $0 -b batch_name -i input_dir -o output_dir" && exit 1 ;;
   esac
 done
 
@@ -51,7 +50,7 @@ human_3_primers[IgL]="AGTGACTTCTACCCGGGAGC"
 human_3_primers[TRB]="CACCCAAAAGGCCACACTGG"
 
 # Metadata file
-TABLE_FILE="$DATA_DIR/$BATCH/sample_table.csv"
+TABLE_FILE="$DATA_DIR/sample_table.csv"
 if [[ ! -f $TABLE_FILE ]]; then
     echo "Error: sample_table.csv do not exist!"
     exit 1
@@ -63,7 +62,7 @@ tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
     species=${species//$'\r'/}
     sample_name="$library - $barcode - $isotype - $species"
     echo "----------------------------------------"
-    echo "Processing $sample_name"
+    echo "($(date)) Processing $sample_name"
     # set local params
     if [[ $species == "Mouse" ]]; then
         align_library="Mus_B6"
@@ -74,11 +73,11 @@ tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
         align_s="homo_sapiens"
     fi
     # merge *.gz into a single pass.fastq
-    SAMPLE_DATA_DIR=$DATA_DIR/$BATCH/$library/$barcode
+    SAMPLE_DATA_DIR=$DATA_DIR/$library/$barcode
     if [ ! -f "$SAMPLE_DATA_DIR/pass.fastq" ]; then
         cat $SAMPLE_DATA_DIR/pass/*.gz | gunzip -c > $SAMPLE_DATA_DIR/pass.fastq
     fi
-    SAMPLE_DIR=$RESULT_DIR/$BATCH/$library/$barcode
+    SAMPLE_DIR=$RESULT_DIR/$library/$barcode
     mkdir -p $SAMPLE_DIR
     # Calculate raw reads
     echo "$sample_name Raw reads: $(($(wc -l < $SAMPLE_DATA_DIR/pass.fastq) / 4))"
@@ -178,7 +177,7 @@ tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
         -cloneId \
         --drop-default-fields -targetSequences -defaultAnchorPoints \
         -uniqueTagCount Molecule -uniqueTagFraction Molecule -readCount \
-        -nFeature CDR3 -aaFeature CDR3\
+        -nFeature CDR3 -allAAFeatures \
         -vHit -dHit -jHit -cHit \
         -vHitScore -dHitScore -jHitScore -cHitScore \
         -vBestIdentityPercent -dBestIdentityPercent -jBestIdentityPercent -cBestIdentityPercent \
@@ -200,7 +199,6 @@ tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
     # Build VDJ clone
     python src/utils/build_vdj_clones.py \
     --result-dir "$RESULT_DIR" \
-    --batch "$BATCH" \
     --library "$library" \
     --barcode "$barcode" \
     --isotype "$isotype" \
@@ -208,4 +206,5 @@ tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
 done
 
 echo "Pipeline finished. Generating summary..."
-python "$SRC_DIR/utils/parsers.py" --batch "$BATCH" --input "slurms_out/mixcr_*.log" --output "$RESULT_DIR/$sbatch/summary.csv"
+LOG_FILE=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
+python "$SRC_DIR/utils/parsers.py" --batch "$BATCH" --input "$LOG_FILE" --output "$RESULT_DIR/summary.csv"

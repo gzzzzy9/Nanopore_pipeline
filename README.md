@@ -8,6 +8,6 @@
 > Bash
 >
 > ```bash
-> sbatch -o slurms_out/mixcr_20260209_A.log nanopore_pipeline.sh -b 20260209 -i /path/to/data -o /path/to/results
+> sbatch -o slurms_out.log nanopore_pipeline.sh -b 20260209 -i /path/to/data -o /path/to/results
 > ```
 
