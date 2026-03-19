@@ -1,5 +1,5 @@
 #!/usr/bin/sh
-#SBATCH -n 56
+#SBATCH -n 10
 #SBATCH -p CPU2
 #SBATCH -o pipeline_out.txt
 
@@ -57,120 +57,120 @@ if [[ ! -f $TABLE_FILE ]]; then
 fi
 
 tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
-    # remove \r and \n 
+    # # remove \r and \n 
     isotype=${isotype//$'\r'/}
     species=${species//$'\r'/}
     sample_name="$library - $barcode - $isotype - $species"
     echo "----------------------------------------"
     echo "($(date)) Processing $sample_name"
-    # set local params
-    if [[ $species == "Mouse" ]]; then
-        align_library="Mus_B6"
-        align_s="mmu_b6"
-    fi
-    if [[ $species == "Human" ]]; then
-        align_library="Human"
-        align_s="homo_sapiens"
-    fi
-    # merge *.gz into a single pass.fastq
-    SAMPLE_DATA_DIR=$DATA_DIR/$library/$barcode
-    if [ ! -f "$SAMPLE_DATA_DIR/pass.fastq" ]; then
-        cat $SAMPLE_DATA_DIR/pass/*.gz | gunzip -c > $SAMPLE_DATA_DIR/pass.fastq
-    fi
+    # # set local params
+    # if [[ $species == "Mouse" ]]; then
+    #     align_library="Mus_B6"
+    #     align_s="mmu_b6"
+    # fi
+    # if [[ $species == "Human" ]]; then
+    #     align_library="Human"
+    #     align_s="homo_sapiens"
+    # fi
+    # # merge *.gz into a single pass.fastq
+    # SAMPLE_DATA_DIR=$DATA_DIR/$library/$barcode
+    # if [ ! -f "$SAMPLE_DATA_DIR/pass.fastq" ]; then
+    #     cat $SAMPLE_DATA_DIR/pass/*.gz | gunzip -c > $SAMPLE_DATA_DIR/pass.fastq
+    # fi
     SAMPLE_DIR=$RESULT_DIR/$library/$barcode
-    mkdir -p $SAMPLE_DIR
-    # Calculate raw reads
-    echo "$sample_name Raw reads: $(($(wc -l < $SAMPLE_DATA_DIR/pass.fastq) / 4))"
-    # 1. Filter reads based on length
-    if [ ! -f "$SAMPLE_DIR/filtered_length.fastq" ]; then
-        filtlong --min_length 500 --max_length 1000 $SAMPLE_DATA_DIR/pass.fastq > $SAMPLE_DIR/filtered_length.fastq 2>/dev/null
-    fi 
-    # Calculate filtered reads
-    echo "$sample_name Length filtered reads: $(($(wc -l < $SAMPLE_DIR/filtered_length.fastq) / 4))"
+    # mkdir -p $SAMPLE_DIR
+    # # Calculate raw reads
+    # echo "$sample_name Raw reads: $(($(wc -l < $SAMPLE_DATA_DIR/pass.fastq) / 4))"
+    # # 1. Filter reads based on length
+    # if [ ! -f "$SAMPLE_DIR/filtered_length.fastq" ]; then
+    #     filtlong --min_length 500 --max_length 1000 $SAMPLE_DATA_DIR/pass.fastq > $SAMPLE_DIR/filtered_length.fastq 2>/dev/null
+    # fi 
+    # # Calculate filtered reads
+    # echo "$sample_name Length filtered reads: $(($(wc -l < $SAMPLE_DIR/filtered_length.fastq) / 4))"
 
-    # 2. Align reads with MiXCR and filter reads lacking V gene or CDR3
-    echo "Alignment using params: library: ${align_library}, species: ${align_s}, assembled by ${assemble_by}, quality threshold: $trimmingQualityThreshold"
-    mixcr align --preset generic-amplicon \
-        --library $align_library \
-        -s $align_s \
-        --rna \
-        -MtrimmingQualityThreshold=$trimmingQualityThreshold \
-        --floating-left-alignment-boundary \
-        --floating-right-alignment-boundary C \
-        --force-overwrite \
-        --assemble-clonotypes-by $assemble_by \
-        --not-aligned-R1 $SAMPLE_DIR/na1.fastq \
-        --drop-non-CDR3-alignments \
-        -OvParameters.geneFeatureToAlign=VRegionWithP \
-        --report $SAMPLE_DIR/align_report_1.txt \
-        $SAMPLE_DIR/filtered_length.fastq \
-        $SAMPLE_DIR/mixcr_alignment_1.vdjca 
+    # # 2. Align reads with MiXCR and filter reads lacking V gene or CDR3
+    # echo "Alignment using params: library: ${align_library}, species: ${align_s}, assembled by ${assemble_by}, quality threshold: $trimmingQualityThreshold"
+    # mixcr align --preset generic-amplicon \
+    #     --library $align_library \
+    #     -s $align_s \
+    #     --rna \
+    #     -MtrimmingQualityThreshold=$trimmingQualityThreshold \
+    #     --floating-left-alignment-boundary \
+    #     --floating-right-alignment-boundary C \
+    #     --force-overwrite \
+    #     --assemble-clonotypes-by $assemble_by \
+    #     --not-aligned-R1 $SAMPLE_DIR/na1.fastq \
+    #     --drop-non-CDR3-alignments \
+    #     -OvParameters.geneFeatureToAlign=VRegionWithP \
+    #     --report $SAMPLE_DIR/align_report_1.txt \
+    #     $SAMPLE_DIR/filtered_length.fastq \
+    #     $SAMPLE_DIR/mixcr_alignment_1.vdjca 
     
-    mixcr exportAlignments --force-overwrite --not-covered-as-empty $SAMPLE_DIR/mixcr_alignment_1.vdjca $SAMPLE_DIR/mixcr_alignment_1.tsv
+    # mixcr exportAlignments --force-overwrite --not-covered-as-empty $SAMPLE_DIR/mixcr_alignment_1.vdjca $SAMPLE_DIR/mixcr_alignment_1.tsv
 
-    # Execute MiXCR filter 
-    python $SRC_DIR/filter_by_MiXCR.py \
-        $SAMPLE_DIR/mixcr_alignment_1.tsv \
-        $SAMPLE_DIR/filtered_length.fastq \
-        $SAMPLE_DIR/filtered_length_mixcr.fastq
+    # # Execute MiXCR filter 
+    # python $SRC_DIR/filter_by_MiXCR.py \
+    #     $SAMPLE_DIR/mixcr_alignment_1.tsv \
+    #     $SAMPLE_DIR/filtered_length.fastq \
+    #     $SAMPLE_DIR/filtered_length_mixcr.fastq
     
-    echo "$sample_name MiXCR filtered reads: $(($(wc -l < $SAMPLE_DIR/filtered_length_mixcr.fastq) / 4))"
+    # echo "$sample_name MiXCR filtered reads: $(($(wc -l < $SAMPLE_DIR/filtered_length_mixcr.fastq) / 4))"
 
-    # 3. Filter reads lacking 5' or 3' primers
-    if [[ $species == "Mouse" ]]; then
-        echo "$sample_name applys $species 3' primer (${mouse_3_primers[$isotype]}) filter in error rate $error_rate"
-        cutadapt --report=minimal -e $error_rate \
-            -g "AGTCGGTAGGATAGCGAGTA...${mouse_3_primers[$isotype]}" \
-            --rc --discard-untrimmed \
-            -o $SAMPLE_DIR/filtered_length_mixcr_primer.fastq $SAMPLE_DIR/filtered_length_mixcr.fastq
-    fi
-    if [[ $species == "Human" ]]; then
-        echo "$sample_name applys $species 3' primer (${human_3_primers[$isotype]}) filter in error rate $error_rate"
-        cutadapt --report=minimal -e $error_rate \
-            -g "AGTCGGTAGGATAGCGAGTA...${human_3_primers[$isotype]}" \
-            --rc --discard-untrimmed \
-            -o $SAMPLE_DIR/filtered_length_mixcr_primer.fastq $SAMPLE_DIR/filtered_length_mixcr.fastq
-    fi
-    echo "$sample_name Primer filtered reads: $(($(wc -l < $SAMPLE_DIR/filtered_length_mixcr_primer.fastq) / 4))"
+    # # 3. Filter reads lacking 5' or 3' primers
+    # if [[ $species == "Mouse" ]]; then
+    #     echo "$sample_name applys $species 3' primer (${mouse_3_primers[$isotype]}) filter in error rate $error_rate"
+    #     cutadapt --report=minimal -e $error_rate \
+    #         -g "AGTCGGTAGGATAGCGAGTA...${mouse_3_primers[$isotype]}" \
+    #         --rc --discard-untrimmed \
+    #         -o $SAMPLE_DIR/filtered_length_mixcr_primer.fastq $SAMPLE_DIR/filtered_length_mixcr.fastq
+    # fi
+    # if [[ $species == "Human" ]]; then
+    #     echo "$sample_name applys $species 3' primer (${human_3_primers[$isotype]}) filter in error rate $error_rate"
+    #     cutadapt --report=minimal -e $error_rate \
+    #         -g "AGTCGGTAGGATAGCGAGTA...${human_3_primers[$isotype]}" \
+    #         --rc --discard-untrimmed \
+    #         -o $SAMPLE_DIR/filtered_length_mixcr_primer.fastq $SAMPLE_DIR/filtered_length_mixcr.fastq
+    # fi
+    # echo "$sample_name Primer filtered reads: $(($(wc -l < $SAMPLE_DIR/filtered_length_mixcr_primer.fastq) / 4))"
 
-    # 4. Align reads with MiXCR again
-    echo "Alignment with UMI using params: library: ${align_library}, species: ${align_s}, assembled by ${assemble_by}, quality threshold: $trimmingQualityThreshold"
-    mixcr align --preset generic-amplicon-with-umi \
-        --library $align_library \
-        -s $align_s \
-        --rna \
-        -MtrimmingQualityThreshold=$trimmingQualityThreshold \
-        --floating-left-alignment-boundary \
-        --floating-right-alignment-boundary C \
-        --force-overwrite \
-        --assemble-clonotypes-by $assemble_by \
-        --tag-pattern "(UMI:TNNNNTNNNNTNNNNTCTT)(R1:*)" \
-        --tag-max-budget 10 \
-        --tag-parse-unstranded \
-        --not-aligned-R1 $SAMPLE_DIR/na2.fastq \
-        --drop-non-CDR3-alignments \
-        -OvParameters.geneFeatureToAlign=VRegionWithP \
-        -OsaveOriginalReads=true \
-        --report $SAMPLE_DIR/align_report_2.txt \
-        $SAMPLE_DIR/filtered_length_mixcr_primer.fastq \
-        $SAMPLE_DIR/mixcr_alignment_2.vdjca
+    # # 4. Align reads with MiXCR again
+    # echo "Alignment with UMI using params: library: ${align_library}, species: ${align_s}, assembled by ${assemble_by}, quality threshold: $trimmingQualityThreshold"
+    # mixcr align --preset generic-amplicon-with-umi \
+    #     --library $align_library \
+    #     -s $align_s \
+    #     --rna \
+    #     -MtrimmingQualityThreshold=$trimmingQualityThreshold \
+    #     --floating-left-alignment-boundary \
+    #     --floating-right-alignment-boundary C \
+    #     --force-overwrite \
+    #     --assemble-clonotypes-by $assemble_by \
+    #     --tag-pattern "(UMI:TNNNNTNNNNTNNNNTCTT)(R1:*)" \
+    #     --tag-max-budget 10 \
+    #     --tag-parse-unstranded \
+    #     --not-aligned-R1 $SAMPLE_DIR/na2.fastq \
+    #     --drop-non-CDR3-alignments \
+    #     -OvParameters.geneFeatureToAlign=VRegionWithP \
+    #     -OsaveOriginalReads=true \
+    #     --report $SAMPLE_DIR/align_report_2.txt \
+    #     $SAMPLE_DIR/filtered_length_mixcr_primer.fastq \
+    #     $SAMPLE_DIR/mixcr_alignment_2.vdjca
 
-    mixcr exportAlignments --force-overwrite --not-covered-as-empty $SAMPLE_DIR/mixcr_alignment_2.vdjca $SAMPLE_DIR/mixcr_alignment_2.tsv    
+    # mixcr exportAlignments --force-overwrite --not-covered-as-empty $SAMPLE_DIR/mixcr_alignment_2.vdjca $SAMPLE_DIR/mixcr_alignment_2.tsv    
 
-    mixcr refineTagsAndSort \
-        --force-overwrite \
-        $SAMPLE_DIR/mixcr_alignment_2.vdjca \
-        $SAMPLE_DIR/mixcr_alignment.corrected.vdjca
+    # mixcr refineTagsAndSort \
+    #     --force-overwrite \
+    #     $SAMPLE_DIR/mixcr_alignment_2.vdjca \
+    #     $SAMPLE_DIR/mixcr_alignment.corrected.vdjca
 
-    mixcr exportAlignments --force-overwrite --not-covered-as-empty $SAMPLE_DIR/mixcr_alignment.corrected.vdjca $SAMPLE_DIR/mixcr_alignment.corrected.tsv
+    # mixcr exportAlignments --force-overwrite --not-covered-as-empty $SAMPLE_DIR/mixcr_alignment.corrected.vdjca $SAMPLE_DIR/mixcr_alignment.corrected.tsv
 
-    mixcr assemble -a \
-        --report $SAMPLE_DIR/assemble_report.txt \
-        --force-overwrite \
-        $SAMPLE_DIR/mixcr_alignment.corrected.vdjca \
-        $SAMPLE_DIR/mixcr_assemble.clna 
+    # mixcr assemble -a \
+    #     --report $SAMPLE_DIR/assemble_report.txt \
+    #     --force-overwrite \
+    #     $SAMPLE_DIR/mixcr_alignment.corrected.vdjca \
+    #     $SAMPLE_DIR/mixcr_assemble.clna 
 
-    mixcr exportAlignments --force-overwrite --not-covered-as-empty $SAMPLE_DIR/mixcr_assemble.clna $SAMPLE_DIR/mixcr_assemble_alignment.tsv
+    # mixcr exportAlignments --force-overwrite --not-covered-as-empty $SAMPLE_DIR/mixcr_assemble.clna $SAMPLE_DIR/mixcr_assemble_alignment.tsv
 
     # export tsv file
     mixcr exportClones \
@@ -205,6 +205,6 @@ tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
     --output "$SAMPLE_DIR/vdj_clone_info.csv"
 done
 
-echo "Pipeline finished. Generating summary..."
-LOG_FILE=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
-python "$SRC_DIR/utils/parsers.py" --batch "$BATCH" --input "$LOG_FILE" --output "$RESULT_DIR/summary.csv"
+# echo "Pipeline finished. Generating summary..."
+# LOG_FILE=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
+# python "$SRC_DIR/utils/parsers.py" --batch "$BATCH" --input "$LOG_FILE" --output "$RESULT_DIR/summary.csv"

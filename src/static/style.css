@@ -4,3 +4,8 @@
     font-family: 'Cascadia Code', monospace !important;
     font-size: 13px !important;
 }
+
+div[data-testid="stPills"] {
+    display: flex;
+    justify-content: center;
+}
