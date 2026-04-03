@@ -1,3 +1,10 @@
+# Nanopore4RepSeq
+A Nanopore sequencing pipeline for repertoire sequencing analysis, with an interactive UI for real-time monitoring and post-sequencing visualization.
+
+<p align="center">
+  <img src="assets/nanopore4repseq_logo.svg" width="400"/>
+</p>
+
 ## Usage
 
 ### Option 1: Command Line

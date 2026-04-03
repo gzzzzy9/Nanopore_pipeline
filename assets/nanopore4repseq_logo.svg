@@ -1,0 +1,38 @@
+<svg width="680" height="680" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+
+<rect x="190" y="190" width="300" height="300" rx="60" fill="#0F6E56"/>
+
+<circle cx="340" cy="255" r="22" fill="#9FE1CB"/>
+<circle cx="340" cy="425" r="22" fill="#9FE1CB"/>
+
+<line x1="340" y1="255" x2="340" y2="425" stroke="#5DCAA5" stroke-width="5"/>
+
+<circle cx="290" cy="278" r="14" fill="#E1F5EE"/>
+<circle cx="390" cy="278" r="14" fill="#E1F5EE"/>
+<line x1="290" y1="278" x2="390" y2="278" stroke="#5DCAA5" stroke-width="3.5"/>
+<line x1="290" y1="278" x2="340" y2="255" stroke="#5DCAA5" stroke-width="3.5"/>
+<line x1="390" y1="278" x2="340" y2="255" stroke="#5DCAA5" stroke-width="3.5"/>
+
+<circle cx="290" cy="322" r="14" fill="#E1F5EE"/>
+<circle cx="390" cy="322" r="14" fill="#E1F5EE"/>
+<line x1="290" y1="322" x2="390" y2="322" stroke="#5DCAA5" stroke-width="3.5"/>
+<line x1="290" y1="322" x2="340" y2="300" stroke="#5DCAA5" stroke-width="3.5"/>
+<line x1="390" y1="322" x2="340" y2="300" stroke="#5DCAA5" stroke-width="3.5"/>
+<circle cx="340" cy="300" r="10" fill="#5DCAA5"/>
+
+<circle cx="290" cy="366" r="14" fill="#E1F5EE"/>
+<circle cx="390" cy="366" r="14" fill="#E1F5EE"/>
+<line x1="290" y1="366" x2="390" y2="366" stroke="#5DCAA5" stroke-width="3.5"/>
+<line x1="290" y1="366" x2="340" y2="344" stroke="#5DCAA5" stroke-width="3.5"/>
+<line x1="390" y1="366" x2="340" y2="344" stroke="#5DCAA5" stroke-width="3.5"/>
+<circle cx="340" cy="344" r="10" fill="#5DCAA5"/>
+
+<circle cx="290" cy="402" r="14" fill="#E1F5EE"/>
+<circle cx="390" cy="402" r="14" fill="#E1F5EE"/>
+<line x1="290" y1="402" x2="390" y2="402" stroke="#5DCAA5" stroke-width="3.5"/>
+<line x1="290" y1="402" x2="340" y2="425" stroke="#5DCAA5" stroke-width="3.5"/>
+<line x1="390" y1="402" x2="340" y2="425" stroke="#5DCAA5" stroke-width="3.5"/>
+
+<text x="340" y="590" text-anchor="middle" font-family="'Source Sans', sans-serif" font-size="38" font-weight="700" fill="#0F6E56" letter-spacing="2">Nanopore4RepSeq</text>
+
+</svg>
