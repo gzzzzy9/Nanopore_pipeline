@@ -1,7 +1,19 @@
+import numpy as np
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import os, subprocess
+
+def load_css():
+    try:
+        with open("src/static/style.css", "r") as f:
+            css = f.read()
+            st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.error("❌ style.css 未找到，请检查路径")
+
+load_css()
 
 def show(batch, log_path, output_dir):
     summary_path = os.path.join(output_dir, "summary.csv")
@@ -43,10 +55,7 @@ def show(batch, log_path, output_dir):
     if not os.path.exists(summary_path):
         st.error(f"Clone file not exist!：{res.stderr}")
     vdj_clone_df = pd.read_csv(vdj_info_file)
-    vdj_clone_df['fullAASeq'] = vdj_clone_df['aaFR1Seq'] + vdj_clone_df['aaCDR1Seq'] + \
-                                vdj_clone_df['aaFR2Seq'] + vdj_clone_df['aaCDR2Seq'] + \
-                                vdj_clone_df['aaFR3Seq'] + vdj_clone_df['aaCDR3Seq'] + \
-                                vdj_clone_df['aaFR4Seq']
+    vdj_clone_df['cloneId'] = np.arange(1, len(vdj_clone_df) + 1).astype(str)
 
     # ── Metric cards ─────────────────────────────
     m1, m2, m3= st.columns(3)
@@ -62,23 +71,21 @@ def show(batch, log_path, output_dir):
     # 只展示关键列，太多列会很挤
     display_cols = [
         "cloneId", "uniqueMoleculeCount",
-        "aaSeqCDR3", "bestVHit", "bestJHit",'fullAASeq'
+        "aaSeqCDR3", "bestVHit", "bestJHit",
     ]
     # 只保留存在的列，避免 KeyError
     display_cols = [c for c in display_cols if c in vdj_clone_df.columns]
 
     st.dataframe(
-        vdj_clone_df[display_cols]
-            .sort_values("uniqueMoleculeCount", ascending=False)
-            .reset_index(drop=True),
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "uniqueMoleculeCount": st.column_config.NumberColumn("UMI Count"),
-            "aaSeqCDR3": st.column_config.NumberColumn("CDR3 aa sequence"),
-            "bestVHit": st.column_config.NumberColumn("V usage"),
-            "bestJHit": st.column_config.NumberColumn("J usage"),
-            "fullAASeq": st.column_config.NumberColumn("Full aa sequence"),
-        }
-    )
+    vdj_clone_df[display_cols].sort_values("uniqueMoleculeCount", ascending=False),
+    width='stretch',
+    hide_index=True,
+    column_config={
+        "cloneId": st.column_config.Column("Clone ID", alignment="center"),
+        "uniqueMoleculeCount": st.column_config.NumberColumn("UMI Count", alignment="center"),
+        "aaSeqCDR3": st.column_config.TextColumn("CDR3 aa sequence", alignment="center"),
+        "bestVHit": st.column_config.TextColumn("V usage", alignment="center"),
+        "bestJHit": st.column_config.TextColumn("J usage", alignment="center"),
+    }
+)
     

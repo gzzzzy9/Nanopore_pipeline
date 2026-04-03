@@ -5,7 +5,7 @@ import plotly.express as px
 import os
 import re
 import time
-from postSeqAnalysis import read_retention, clone_summary
+from postSeqAnalysis import read_retention, clone_summary, clone_cdr3_length
 
 st.set_page_config(page_title="Nanopore4RepSeq UI", layout="wide")
 st.title("🧬 Nanopore4RepSeq Console")
@@ -279,3 +279,5 @@ elif category == "📊 Clone Analysis":
     ])
     with tab1:
         clone_summary.show(batch, log_path, output_dir)
+    with tab5:
+        clone_cdr3_length.show(batch, log_path, output_dir)

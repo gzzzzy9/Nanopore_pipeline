@@ -177,7 +177,7 @@ tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
         -cloneId \
         --drop-default-fields -targetSequences -defaultAnchorPoints \
         -uniqueTagCount Molecule -uniqueTagFraction Molecule -readCount \
-        -nFeature CDR3 -allAAFeatures \
+        -allNFeatures -allAAFeatures \
         -vHit -dHit -jHit -cHit \
         -vHitScore -dHitScore -jHitScore -cHitScore \
         -vBestIdentityPercent -dBestIdentityPercent -jBestIdentityPercent -cBestIdentityPercent \
@@ -185,16 +185,17 @@ tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
         -allNMutationsCount FR1Begin FR3End substitutions \
         -allAAMutations FR1Begin FR3End substitutions \
         -allAAMutationsCount FR1Begin FR3End substitutions \
+        -allAALength FR1Begin FR3End \
         -isProductive FR1 -isProductive FR2 -isProductive FR3 \
         -isProductive CDR1 -isProductive CDR2 -isProductive CDR3 \
         --force-overwrite \
         $SAMPLE_DIR/mixcr_assemble.clna \
         $SAMPLE_DIR/mixcr_assemble.tsv
     # export reads that failed in clone assembly
-    mixcr exportReadsForClones -f \
-        --id -1 \
-        $SAMPLE_DIR/mixcr_assemble.clna \
-        $SAMPLE_DIR/na3.fastq
+    # mixcr exportReadsForClones -f \
+    #     --id -1 \
+    #     $SAMPLE_DIR/mixcr_assemble.clna \
+    #     $SAMPLE_DIR/na3.fastq
 
     # Build VDJ clone
     python src/utils/build_vdj_clones.py \
@@ -202,7 +203,7 @@ tail -n +2 $TABLE_FILE | while IFS=, read -r library barcode isotype species; do
     --library "$library" \
     --barcode "$barcode" \
     --isotype "$isotype" \
-    --output "$SAMPLE_DIR/vdj_clone_info.csv"
+    --output "$SAMPLE_DIR/full_aa_seq_info.csv" "$SAMPLE_DIR/vdj_clone_info.csv"
 done
 
 # echo "Pipeline finished. Generating summary..."

@@ -9,3 +9,7 @@ div[data-testid="stPills"] {
     display: flex;
     justify-content: center;
 }
+
+div[data-testid="stDataFrame"] th {
+    text-align: center !important;
+}
